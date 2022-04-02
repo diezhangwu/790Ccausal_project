@@ -1,0 +1,23 @@
+---
+title: "data_analysis"
+output: html_notebook
+---
+
+
+#### import dataset and data cleaning
+```{r}
+
+```
+
+
+#### Descriptive statistics
+```{r}
+
+```
+
+
+### Simple outcome regression
+```{r}
+
+```
+
