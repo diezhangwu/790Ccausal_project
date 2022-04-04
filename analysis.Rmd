@@ -6,6 +6,7 @@ output: html_notebook
 
 #### import dataset and data cleaning
 ```{r}
+library(dplyr)
 library(haven)
 dataset <- read_stata("data/Regression-and-Event-Study-Analyses.dta")
 ```
@@ -58,8 +59,45 @@ summary(outcomes)
 ```
 
 
-### Simple outcome regression
+### RD Regression
+
+Model specification:
+
+$ln(mortality_{ct}) = \beta_0 + \boldsymbol{Z}_{ct} \beta_1 + \boldsymbol{X}_{ct} \beta_2 + \nu_c + w_t + I(t > t^*) \beta_3 + \epsilon_{ct}$
+
+$ln(mortality_{ct}) = \beta_0 + \boldsymbol{Z}_{ct} \beta_1 + \boldsymbol{X}_{ct} \beta_2 + \nu_c + w_t + \boldsymbol{Z}_{ct} \beta_3 I(t > t^*)  + \epsilon_{ct}$
+
 ```{r}
+dat <- dataset %>% 
+  select(year,
+         city,
+         city_id,
+         percent_female,
+         percent_black,
+         percent_nonwhite,
+         percent_white,
+         percent_other_nonwhite,
+         percent_foreign,
+         percent_age_less15,
+         percent_age_15to44,
+         percent_age_45plus, 
+         mortality_rate,
+         ln_mortality_rate,
+         typhoid_rate,
+         diarrhea_rate,
+         filter, chlorination, water_project) %>% 
+  mutate(filter == ifelse(1, 1, 0),
+         chlorination == ifelse(1, 1, 0),
+         water_project == ifelse(1, 1, 0))
+dim(dat)
+dat <- dat[complete.cases(dat), ]
+dim(dat)
 
 ```
+
+
+
+
+
+
 
