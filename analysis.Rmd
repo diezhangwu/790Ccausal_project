@@ -36,25 +36,48 @@ dataset %>%
   select(percent_female,percent_black,percent_nonwhite,percent_white,percent_other_nonwhite,percent_foreign,percent_age_less15,percent_age_15to44,percent_age_45plus) %>%
   summarise_all(list(mean = ~mean(.), sd = ~sd(.)))
 
-#Outcomes
+#Outcomes: filtration
 #all
 dataset %>%
-  select(mortality_rate,mortality_under1_rate,typhoid_rate,diarrhea_rate, nonpul_TB_rate) %>%
+  select(mortality_rate,mortality_under1_rate,typhoid_rate,diarrhea_rate) %>%
   summarise_all(list(mean = ~mean(.,na.rm = T), sd = ~sd(.,na.rm = T)))
 #treatment
 dataset %>%
    filter(filter==1) %>%
-  select(mortality_rate,mortality_under1_rate,typhoid_rate,diarrhea_rate, nonpul_TB_rate) %>%
+  select(mortality_rate,mortality_under1_rate,typhoid_rate,diarrhea_rate) %>%
   summarise_all(list(mean = ~mean(.,na.rm = T), sd = ~sd(.,na.rm = T)))
 #control
 dataset %>%
   filter(filter<1) %>%
-  select(mortality_rate,mortality_under1_rate,typhoid_rate,diarrhea_rate, nonpul_TB_rate) %>%
+  select(mortality_rate,mortality_under1_rate,typhoid_rate,diarrhea_rate) %>%
   summarise_all(list(mean = ~mean(.,na.rm = T), sd = ~sd(.,na.rm = T)))
 
-outcomes <- dataset %>%
-  select(mortality_rate,mortality_under1_rate,typhoid_rate,diarrhea_rate, nonpul_TB_rate)
-summary(outcomes)
+test <- dataset %>%
+  filter(filter<1 & filter>0)
+
+#Outcomes: chlorination
+#treatment
+dataset %>%
+   filter(chlorination==1) %>%
+  select(mortality_rate,mortality_under1_rate,typhoid_rate,diarrhea_rate) %>%
+  summarise_all(list(mean = ~mean(.,na.rm = T), sd = ~sd(.,na.rm = T)))
+#control
+dataset %>%
+  filter(chlorination<1) %>%
+  select(mortality_rate,mortality_under1_rate,typhoid_rate,diarrhea_rate) %>%
+  summarise_all(list(mean = ~mean(.,na.rm = T), sd = ~sd(.,na.rm = T)))
+
+#Outcomes: clean water project
+#treatment
+dataset %>%
+   filter(water_project==1) %>%
+  select(mortality_rate,mortality_under1_rate,typhoid_rate,diarrhea_rate) %>%
+  summarise_all(list(mean = ~mean(.,na.rm = T), sd = ~sd(.,na.rm = T)))
+#control
+dataset %>%
+  filter(water_project<1) %>%
+  select(mortality_rate,mortality_under1_rate,typhoid_rate,diarrhea_rate) %>%
+  summarise_all(list(mean = ~mean(.,na.rm = T), sd = ~sd(.,na.rm = T)))
 ```
 
 
