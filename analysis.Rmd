@@ -86,9 +86,9 @@ dataset %>%
 
 Model specification:
 
-$ln(mortality_{ct}) = \beta_0 + \boldsymbol{Z}_{ct} \beta_1 + \boldsymbol{X}_{ct} \beta_2 + \nu_c + w_t + I(t > t^*) \beta_3 + \epsilon_{ct}$
+$ln(mortality_{t}) = \beta_0 + \boldsymbol{Z}_{t} \beta_1 + \boldsymbol{X}_{t} \beta_2 + \beta_3t + I(t > t^*) \beta_4 + \epsilon_{t}$
 
-$ln(mortality_{ct}) = \beta_0 + \boldsymbol{Z}_{ct} \beta_1 + \boldsymbol{X}_{ct} \beta_2 + \nu_c + w_t + \boldsymbol{Z}_{ct} \beta_3 I(t > t^*)  + \epsilon_{ct}$
+$ln(mortality_{t}) = \beta_0 + \boldsymbol{Z}_{t} \beta_1 + \boldsymbol{X}_{t} \beta_2 + \beta_3t + \beta_4 I(t > t^*) + \beta_5 I(t > t^*)* t  + \epsilon_{t}$
 
 ```{r}
 dat <- dataset %>% 
@@ -110,9 +110,96 @@ dat <- dataset %>%
          chlorination = ifelse(chlorination == 1, 1, 0),
          water_project = ifelse(water_project == 1, 1, 0))
 
+start_year <- dat %>% 
+  arrange(city, by_group = year) %>% 
+  mutate(filter1 = ifelse(filter == 0, 10000, year),
+          ch1 = ifelse(chlorination == 0, 10000, year),
+         water1 = ifelse(water_project == 0, 10000, year)) %>% 
+  group_by(city) %>% 
+  summarise(filter_start = min(filter1),
+            ch_start = min(ch1),
+            water_start = min(water1)) %>% 
+  mutate(filter_start = ifelse(filter_start == 10000, 1940, filter_start),
+         ch_start = ifelse(ch_start == 10000, 1940, ch_start),
+         water_start = ifelse(water_start == 10000, 1940, water_start))
+
+dat <- left_join(dat, start_year) %>% 
+  mutate(filter_t = year - filter_start,
+         ch_t = year - ch_start,
+         water_t = year - water_start,
+         filter_knot = ifelse(filter_t <=0, 0, 1),
+         ch_knot = ifelse(ch_t <= 0, 0, 1),
+         water_knot = ifelse(water_t <= 0, 0, 1)) %>% 
+  mutate(typhoid_rate = ifelse(typhoid_rate == 0, 0.001, typhoid_rate))
+```
+
+## treatment effect of water filteration
+```{r}
+summary(glm(log(mortality_rate) ~ filter + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + filter_t + filter_knot, data = dat))
+
+summary(glm(log(ln_mortality_rate) ~ filter + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + filter_t + filter_knot, data = dat))
+
+summary(glm(log(typhoid_rate) ~ filter + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + filter_t + filter_knot, data = dat))
+
+summary(glm(log(diarrhea_rate) ~ filter + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + filter_t + filter_knot, data = dat))
+```
+
+## treatment effect of chlorination
+```{r}
+summary(glm(log(mortality_rate) ~ chlorination + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot, data = dat))
+
+summary(glm(log(ln_mortality_rate) ~ chlorination + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot, data = dat))
+
+summary(glm(log(typhoid_rate) ~ chlorination + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot, data = dat))
+
+summary(glm(log(diarrhea_rate) ~ chlorination + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot, data = dat))
+```
+
+### clean water project
+```{r}
+summary(glm(log(mortality_rate) ~ water_project + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + water_t + water_knot, data = dat))
+
+summary(glm(log(ln_mortality_rate) ~ water_project + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + water_t + water_knot, data = dat))
+
+summary(glm(log(typhoid_rate) ~ water_project + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + water_t + water_knot, data = dat))
+
+summary(glm(log(diarrhea_rate) ~ water_project + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + water_t + water_knot, data = dat))
 ```
 
 
+### RD model 2
+
+```{r}
+summary(glm(log(mortality_rate) ~ filter + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + filter_t + filter_knot + filter_knot*filter_t, data = dat))
+
+summary(glm(log(ln_mortality_rate) ~ filter + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + filter_t + filter_knot + filter_knot*filter_t, data = dat))
+
+summary(glm(log(typhoid_rate) ~ filter + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + filter_t + filter_knot*filter_t, data = dat))
+
+summary(glm(log(diarrhea_rate) ~ filter + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + filter_t + filter_knot + filter_knot*filter_t, data = dat))
+```
+
+## chlorination
+```{r}
+summary(glm(log(mortality_rate) ~ chlorination + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot*ch_t, data = dat))
+
+summary(glm(log(ln_mortality_rate) ~ chlorination + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot*ch_t, data = dat))
+
+summary(glm(log(typhoid_rate) ~ chlorination + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot*ch_t, data = dat))
+
+summary(glm(log(diarrhea_rate) ~ chlorination + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot*ch_t, data = dat))
+```
+
+## water project
+```{r}
+summary(glm(log(mortality_rate) ~ water_project + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + water_t + water_knot*water_t, data = dat))
+
+summary(glm(log(ln_mortality_rate) ~ water_project + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + water_t + water_knot*water_t, data = dat))
+
+summary(glm(log(typhoid_rate) ~ water_project + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + water_t + water_knot*water_t, data = dat))
+
+summary(glm(log(diarrhea_rate) ~ water_project + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + water_t + water_knot*water_t, data = dat))
+```
 
 
 
