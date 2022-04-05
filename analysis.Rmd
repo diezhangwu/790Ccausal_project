@@ -96,10 +96,7 @@ dat <- dataset %>%
          city,
          city_id,
          percent_female,
-         percent_black,
          percent_nonwhite,
-         percent_white,
-         percent_other_nonwhite,
          percent_foreign,
          percent_age_less15,
          percent_age_15to44,
@@ -109,12 +106,9 @@ dat <- dataset %>%
          typhoid_rate,
          diarrhea_rate,
          filter, chlorination, water_project) %>% 
-  mutate(filter == ifelse(1, 1, 0),
-         chlorination == ifelse(1, 1, 0),
-         water_project == ifelse(1, 1, 0))
-dim(dat)
-dat <- dat[complete.cases(dat), ]
-dim(dat)
+  mutate(filter = ifelse(filter == 1, 1, 0),
+         chlorination = ifelse(chlorination == 1, 1, 0),
+         water_project = ifelse(water_project == 1, 1, 0))
 
 ```
 
