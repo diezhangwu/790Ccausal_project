@@ -109,13 +109,18 @@ dat <- dataset %>%
          typhoid_rate,
          diarrhea_rate,
          filter, chlorination, water_project) %>% 
-  mutate(filter == ifelse(1, 1, 0),
-         chlorination == ifelse(1, 1, 0),
-         water_project == ifelse(1, 1, 0))
+  mutate(filter_bin = ifelse(filter==1, 1, 0),
+         chlorination_bin = ifelse(chlorination==1, 1, 0),
+         water_project_bin = ifelse(water_project==1, 1, 0))
+dat %>%
+  group_by(year) %>%
+  count(filter_bin)
+
 dim(dat)
 dat <- dat[complete.cases(dat), ]
 dim(dat)
 
+summary(dat)
 ```
 
 
