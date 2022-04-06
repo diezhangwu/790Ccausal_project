@@ -106,7 +106,7 @@ dat <- dataset %>%
          typhoid_rate,
          diarrhea_rate,
          filter, chlorination, water_project) %>% 
-  mutate(filter = ifelse(filter == 1, 1, 0),
+    mutate(filter = ifelse(filter == 1, 1, 0),
          chlorination = ifelse(chlorination == 1, 1, 0),
          water_project = ifelse(water_project == 1, 1, 0))
 
@@ -164,6 +164,7 @@ summary(glm(log(ln_mortality_rate) ~ water_project + percent_female + percent_no
 summary(glm(log(typhoid_rate) ~ water_project + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + water_t + water_knot, data = dat))
 
 summary(glm(log(diarrhea_rate) ~ water_project + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + water_t + water_knot, data = dat))
+
 ```
 
 
