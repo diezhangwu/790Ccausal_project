@@ -8,6 +8,7 @@ output: html_notebook
 ```{r}
 library(dplyr)
 library(haven)
+library(ggplot2)
 dataset <- read_stata("data/Regression-and-Event-Study-Analyses.dta")
 ```
 
@@ -86,9 +87,13 @@ dataset %>%
 
 Model specification:
 
-$ln(mortality_{t}) = \beta_0 + \boldsymbol{Z}_{t} \beta_1 + \boldsymbol{X}_{t} \beta_2 + \beta_3t + I(t > t^*) \beta_4 + \epsilon_{t}$
+$ln(mortality_{t}) = \beta_0 + \boldsymbol{X}_{t} \beta_1 + \boldsymbol{Z}_t\beta_2+ \beta_3 t + \beta_4 I(t > t^*) + \epsilon_{t}$
 
-$ln(mortality_{t}) = \beta_0 + \boldsymbol{Z}_{t} \beta_1 + \boldsymbol{X}_{t} \beta_2 + \beta_3t + \beta_4 I(t > t^*) + \beta_5 I(t > t^*)* t  + \epsilon_{t}$
+$ln(mortality_{t}) = \beta_0 + \boldsymbol{X}_{t} \beta_1 + \boldsymbol{Z}_t\beta_2 + \beta_3 t + \beta_4 I(t > t^*) + \beta_5 I(t > t^*)* t  + \epsilon_{t}$
+
+$ln(mortality_{t}) = \beta_0 + \boldsymbol{X}_{t} \beta_1 + \beta_2 t + \beta_3 I(t > t^*) + \epsilon_{t}$
+
+$ln(mortality_{t}) = \beta_0 + \boldsymbol{X}_{t} \beta_1 + \beta_2 t + \beta_3 I(t > t^*) + \beta_4 I(t > t^*)* t  + \epsilon_{t}$
 
 ```{r}
 dat <- dataset %>% 
@@ -101,10 +106,10 @@ dat <- dataset %>%
          percent_age_less15,
          percent_age_15to44,
          percent_age_45plus, 
-         mortality_rate,
          ln_mortality_rate,
-         typhoid_rate,
-         diarrhea_rate,
+         ln_mortality_under1_rate,
+         ln_typhoid_rate,
+         ln_diarrhea_rate,
          filter, chlorination, water_project) %>% 
     mutate(filter = ifelse(filter == 1, 1, 0),
          chlorination = ifelse(chlorination == 1, 1, 0),
@@ -129,41 +134,42 @@ dat <- left_join(dat, start_year) %>%
          water_t = year - water_start,
          filter_knot = ifelse(filter_t <=0, 0, 1),
          ch_knot = ifelse(ch_t <= 0, 0, 1),
-         water_knot = ifelse(water_t <= 0, 0, 1)) %>% 
-  mutate(typhoid_rate = ifelse(typhoid_rate == 0, 0.001, typhoid_rate))
+         water_knot = ifelse(water_t <= 0, 0, 1)) 
+
+
 ```
 
 ## treatment effect of water filteration
 ```{r}
-summary(glm(log(mortality_rate) ~ filter + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + filter_t + filter_knot, data = dat))
+summary(glm(ln_mortality_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + filter_t + filter_knot, data = dat))
 
-summary(glm(log(ln_mortality_rate) ~ filter + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + filter_t + filter_knot, data = dat))
+summary(glm(ln_mortality_under1_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + filter_t + filter_knot, data = dat))
 
-summary(glm(log(typhoid_rate) ~ filter + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + filter_t + filter_knot, data = dat))
+summary(glm(ln_typhoid_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + filter_t + filter_knot, data = dat))
 
-summary(glm(log(diarrhea_rate) ~ filter + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + filter_t + filter_knot, data = dat))
+summary(glm(ln_diarrhea_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + filter_t + filter_knot, data = dat))
 ```
 
 ## treatment effect of chlorination
 ```{r}
-summary(glm(log(mortality_rate) ~ chlorination + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot, data = dat))
+summary(glm(ln_mortality_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot, data = dat))
 
-summary(glm(log(ln_mortality_rate) ~ chlorination + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot, data = dat))
+summary(glm(ln_mortality_under1_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot, data = dat))
 
-summary(glm(log(typhoid_rate) ~ chlorination + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot, data = dat))
+summary(glm(ln_typhoid_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot, data = dat))
 
-summary(glm(log(diarrhea_rate) ~ chlorination + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot, data = dat))
+summary(glm(ln_diarrhea_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot, data = dat))
 ```
 
 ### clean water project
 ```{r}
-summary(glm(log(mortality_rate) ~ water_project + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + water_t + water_knot, data = dat))
+summary(glm(ln_mortality_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + water_t + water_knot, data = dat))
 
-summary(glm(log(ln_mortality_rate) ~ water_project + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + water_t + water_knot, data = dat))
+summary(glm(ln_mortality_under1_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + water_t + water_knot, data = dat))
 
-summary(glm(log(typhoid_rate) ~ water_project + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + water_t + water_knot, data = dat))
+summary(glm(ln_typhoid_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + water_t + water_knot, data = dat))
 
-summary(glm(log(diarrhea_rate) ~ water_project + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + water_t + water_knot, data = dat))
+summary(glm(ln_diarrhea_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + water_t + water_knot, data = dat))
 
 ```
 
@@ -171,35 +177,103 @@ summary(glm(log(diarrhea_rate) ~ water_project + percent_female + percent_nonwhi
 ### RD model 2
 
 ```{r}
-summary(glm(log(mortality_rate) ~ filter + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + filter_t + filter_knot + filter_knot*filter_t, data = dat))
+summary(glm(ln_mortality_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + filter_t + filter_knot + filter_knot*filter_t, data = dat))
 
-summary(glm(log(ln_mortality_rate) ~ filter + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + filter_t + filter_knot + filter_knot*filter_t, data = dat))
+summary(glm(ln_mortality_under1_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + filter_t + filter_knot + filter_knot*filter_t, data = dat))
 
-summary(glm(log(typhoid_rate) ~ filter + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + filter_t + filter_knot*filter_t, data = dat))
+summary(glm(ln_typhoid_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + filter_t + filter_knot*filter_t, data = dat))
 
-summary(glm(log(diarrhea_rate) ~ filter + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + filter_t + filter_knot + filter_knot*filter_t, data = dat))
+summary(glm(ln_diarrhea_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + filter_t + filter_knot + filter_knot*filter_t, data = dat))
 ```
 
 ## chlorination
 ```{r}
-summary(glm(log(mortality_rate) ~ chlorination + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot*ch_t, data = dat))
+summary(glm(ln_mortality_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot*ch_t, data = dat))
 
-summary(glm(log(ln_mortality_rate) ~ chlorination + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot*ch_t, data = dat))
+summary(glm(ln_mortality_under1_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot*ch_t, data = dat))
 
-summary(glm(log(typhoid_rate) ~ chlorination + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot*ch_t, data = dat))
+summary(glm(ln_typhoid_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot*ch_t, data = dat))
 
-summary(glm(log(diarrhea_rate) ~ chlorination + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot*ch_t, data = dat))
+summary(glm(ln_diarrhea_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot*ch_t, data = dat))
 ```
+
+## plot observed data with fitted line
+```{r}
+dat.pred <- dat %>% select(
+                           percent_female,
+                           percent_nonwhite,
+                           percent_foreign,
+                           percent_age_less15,
+                           percent_age_15to44,
+                           percent_age_45plus,
+                           ch_t, 
+                           ch_knot)
+
+mod.mort <- glm(ln_mortality_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot*ch_t, data = dat)
+
+y.mort <- predict(mod.mort, newdata = dat.pred)
+
+ggplot() +
+  geom_point(aes(x = dat$ch_t, y = dat$ln_mortality_rate)) +
+  geom_point(aes(x = dat$ch_t, y = y.mort, color = as.factor(dat$ch_knot + 1))) +
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(x = "year relative to start of treatment", y = "log all-cause mortality")+
+  theme(legend.position = "none")
+
+
+
+mod.in <- glm(ln_mortality_under1_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot*ch_t, data = dat)
+
+y.in <- predict(mod.in, newdata = dat.pred)
+
+ggplot() +
+  geom_point(aes(x = dat$ch_t, y = dat$ln_mortality_under1_rate) )+
+  geom_point(aes(x = dat$ch_t, y = y.in, color = as.factor(dat$ch_knot + 1))) +
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(x = "year relative to start of treatment", y = "log infant mortality")+
+  theme(legend.position = "none")
+
+
+
+mod.ty <- glm(ln_typhoid_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot*ch_t, data = dat)
+
+y.ty <- predict(mod.ty, newdata = dat.pred)
+
+ggplot() +
+  geom_point(aes(x = dat$ch_t, y = dat$ln_typhoid_rate) )+
+  geom_point(aes(x = dat$ch_t, y = y.ty, color = as.factor(dat$ch_knot + 1))) +
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(x = "year relative to start of treatment", y = "log typhoid mortality")+
+  theme(legend.position = "none")
+
+
+
+mod.di <- glm(ln_diarrhea_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot*ch_t, data = dat)
+
+
+y.di <- predict(mod.di, newdata = dat.pred)
+
+ggplot() +
+  geom_point(aes(x = dat$ch_t, y = dat$ln_diarrhea_rate) )+
+  geom_point(aes(x = dat$ch_t, y = y.di, color = as.factor(dat$ch_knot + 1))) +
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(x = "year relative to start of treatment", y = "log diarrhea mortality")+
+  theme(legend.position = "none")
+
+```
+
+
+
 
 ## water project
 ```{r}
-summary(glm(log(mortality_rate) ~ water_project + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + water_t + water_knot*water_t, data = dat))
+summary(glm(ln_mortality_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + water_t + water_knot*water_t, data = dat))
 
-summary(glm(log(ln_mortality_rate) ~ water_project + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + water_t + water_knot*water_t, data = dat))
+summary(glm(ln_mortality_under1_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + water_t + water_knot*water_t, data = dat))
 
-summary(glm(log(typhoid_rate) ~ water_project + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + water_t + water_knot*water_t, data = dat))
+summary(glm(ln_typhoid_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + water_t + water_knot*water_t, data = dat))
 
-summary(glm(log(diarrhea_rate) ~ water_project + percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + water_t + water_knot*water_t, data = dat))
+summary(glm(ln_diarrhea_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + water_t + water_knot*water_t, data = dat))
 ```
 
 
