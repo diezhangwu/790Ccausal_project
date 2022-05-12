@@ -354,10 +354,13 @@ ggplot() +
 #if(!require(devtools)) install.packages("devtools")
 #devtools::install_github("kassambara/ggpubr")
 library(ggpubr)
-tiff("unadj_ITS_chl.tiff", width = 12, height = 8, units = 'in', res = 500)
+# 1. Open jpeg file
+jpeg("unadj_ITS_chl.jpg", width = 12, height = 8, units = 'in', res = 500)
+# 2. Create the plot
 ggarrange(fig_mort, fig_in, fig_ty, fig_di, 
           labels = c("A", "B", "C", "D"),
           ncol = 2, nrow = 2)
+# 3. Close the file
 dev.off()
 ```
 
