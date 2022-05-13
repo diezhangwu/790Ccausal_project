@@ -126,7 +126,9 @@ start_year <- dat %>%
             water_start = min(water1)) %>% 
   mutate(filter_start = ifelse(filter_start == 10000, 1940, filter_start),
          ch_start = ifelse(ch_start == 10000, 1940, ch_start),
-         water_start = ifelse(water_start == 10000, 1940, water_start))
+         water_start = ifelse(water_start == 10000, 1940, water_start)) 
+
+start_year$start <- apply(start_year, 1, min)
 
 dat <- left_join(dat, start_year) %>% 
   mutate(filter_t = year - filter_start,
@@ -134,10 +136,874 @@ dat <- left_join(dat, start_year) %>%
          water_t = year - water_start,
          filter_knot = ifelse(filter_t <=0, 0, 1),
          ch_knot = ifelse(ch_t <= 0, 0, 1),
-         water_knot = ifelse(water_t <= 0, 0, 1)) 
+         water_knot = ifelse(water_t <= 0, 0, 1)) %>% 
+  mutate(t = year - as.numeric(start),
+         trt = ifelse( filter + chlorination + water_project == 0, 0, 1),
+         trt_knot = ifelse(t <= 0, 0, 1))
 
 
 ```
+
+```{r}
+dat <- dat %>% mutate(trt_1 = t,
+               trt_2 = bin_number(t/2),
+               trt_3 = bin_number(t/3),
+               trt_5 = bin_number(t/5),
+               trt_7 = bin_number(t/7),
+               trt_10 = bin_number(t/10))
+```
+
+```{r}
+# dat %>% 
+#   group_by(trt_1) %>% 
+#   summarize(mean = mean(ln_mortality_rate), n = n()) %>% 
+#   ggplot() + 
+#   aes(x = trt_1, y = mean, size = n) + 
+#   geom_point(shape = 21,color = "black",fill = "lightgray") + 
+#   geom_vline(xintercept = 0, color = "blue") +
+#   labs(title = "average mortality based on bin size = 1", x = "time relative to the start of health policy", y = "average log mortality rate")
+# 
+# dat %>% 
+#   group_by(trt_2) %>% 
+#   summarize(mean = mean(ln_mortality_rate), n = n()) %>% 
+#   ggplot() + 
+#   aes(x = trt_2, y = mean, size = n) + 
+#   geom_point(shape = 21,color = "black",fill = "lightgray") + 
+#   geom_vline(xintercept = 0, color = "blue") +
+#   labs(title = "average mortality based on bin size = 2", x = "time relative to the start of health policy", y = "average log mortality rate")
+# 
+# dat %>% 
+#   group_by(trt_3) %>% 
+#   summarize(mean = mean(ln_mortality_rate), n = n()) %>% 
+#   ggplot() + 
+#   aes(x = trt_3, y = mean, size = n) + 
+#   geom_point(shape = 21,color = "black",fill = "lightgray") +
+#   geom_vline(xintercept = 0, color = "blue") +
+#   labs(title = "average mortality based on bin size = 3", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+dat %>% 
+  group_by(trt_5) %>% 
+  summarize(mean = mean(ln_mortality_rate), n = n()) %>% 
+  ggplot() + 
+  aes(x = trt_5, y = mean, size = n) + 
+  geom_point(shape = 21,color = "black",fill = "lightgray") +
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "all cause mortality rate", x = "time relative to the start of treatment", y = "average log all cause mortality rate")
+
+
+# dat %>% 
+#   group_by(trt_7) %>% 
+#   summarize(mean = mean(ln_mortality_rate), n = n()) %>% 
+#   ggplot() + aes(x = trt_7, y = mean, size = n) + geom_point(shape = 21,color = "black",fill = "lightgray") + 
+#   geom_vline(xintercept = 0, color = "blue") +
+#   labs(title = "average mortality based on bin size = 7", x = "time relative to the start of health policy", y = "average log mortality rate")
+# 
+# dat %>% 
+#   group_by(trt_10) %>% 
+#   summarize(mean = mean(ln_mortality_rate), n = n()) %>% 
+#   ggplot() + aes(x = trt_10, y = mean, size = n) + geom_point(shape = 21,color = "black",fill = "lightgray") +
+#   geom_vline(xintercept = 0, color = "blue") +
+#   labs(title = "average mortality based on bin size = 10", x = "time relative to the start of health policy", y = "average log mortality rate")
+```
+
+```{r}
+# dat %>% 
+#   group_by(trt_1) %>% 
+#   summarize(mean = mean(ln_mortality_under1_rate), n = n()) %>% 
+#   ggplot() + 
+#   aes(x = trt_1, y = mean, size = n) + 
+#   geom_point(shape = 21,color = "black",fill = "lightgray") + 
+#   geom_vline(xintercept = 0, color = "blue") +
+#   labs(title = "average mortality based on bin size = 1", x = "time relative to the start of health policy", y = "average log mortality rate")
+# 
+# dat %>% 
+#   group_by(trt_2) %>% 
+#   summarize(mean = mean(ln_mortality_under1_rate), n = n()) %>% 
+#   ggplot() + 
+#   aes(x = trt_2, y = mean, size = n) + 
+#   geom_point(shape = 21,color = "black",fill = "lightgray") + 
+#   geom_vline(xintercept = 0, color = "blue") +
+#   labs(title = "average mortality based on bin size = 2", x = "time relative to the start of health policy", y = "average log mortality rate")
+# 
+# dat %>% 
+#   group_by(trt_3) %>% 
+#   summarize(mean = mean(ln_mortality_under1_rate), n = n()) %>% 
+#   ggplot() + 
+#   aes(x = trt_3, y = mean, size = n) + 
+#   geom_point(shape = 21,color = "black",fill = "lightgray") +
+#   geom_vline(xintercept = 0, color = "blue") +
+#   labs(title = "average mortality based on bin size = 3", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+dat %>% 
+  group_by(trt_5) %>% 
+  summarize(mean = mean(ln_mortality_under1_rate), n = n()) %>% 
+  ggplot() + 
+  aes(x = trt_5, y = mean, size = n) + 
+  geom_point(shape = 21,color = "black",fill = "lightgray") +
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "Infant mortality rate", x = "time relative to the start of treatment", y = "average log infant mortality rate")
+
+
+# dat %>% 
+#   group_by(trt_7) %>% 
+#   summarize(mean = mean(ln_mortality_under1_rate), n = n()) %>% 
+#   ggplot() + aes(x = trt_7, y = mean, size = n) + geom_point(shape = 21,color = "black",fill = "lightgray") + 
+#   geom_vline(xintercept = 0, color = "blue") +
+#   labs(title = "average mortality based on bin size = 7", x = "time relative to the start of health policy", y = "average log mortality rate")
+# 
+# dat %>% 
+#   group_by(trt_10) %>% 
+#   summarize(mean = mean(ln_mortality_under1_rate), n = n()) %>% 
+#   ggplot() + aes(x = trt_10, y = mean, size = n) + geom_point(shape = 21,color = "black",fill = "lightgray") +
+#   geom_vline(xintercept = 0, color = "blue") +
+#   labs(title = "average mortality based on bin size = 10", x = "time relative to the start of health policy", y = "average log mortality rate")
+```
+
+```{r}
+# dat %>% 
+#   group_by(trt_1) %>% 
+#   summarize(mean = mean(ln_typhoid_rate), n = n()) %>% 
+#   ggplot() + 
+#   aes(x = trt_1, y = mean, size = n) + 
+#   geom_point(shape = 21,color = "black",fill = "lightgray") + 
+#   geom_vline(xintercept = 0, color = "blue") +
+#   labs(title = "average mortality based on bin size = 1", x = "time relative to the start of health policy", y = "average log mortality rate")
+# 
+# dat %>% 
+#   group_by(trt_2) %>% 
+#   summarize(mean = mean(ln_typhoid_rate), n = n()) %>% 
+#   ggplot() + 
+#   aes(x = trt_2, y = mean, size = n) + 
+#   geom_point(shape = 21,color = "black",fill = "lightgray") + 
+#   geom_vline(xintercept = 0, color = "blue") +
+#   labs(title = "average mortality based on bin size = 2", x = "time relative to the start of health policy", y = "average log mortality rate")
+# 
+# dat %>% 
+#   group_by(trt_3) %>% 
+#   summarize(mean = mean(ln_typhoid_rate), n = n()) %>% 
+#   ggplot() + 
+#   aes(x = trt_3, y = mean, size = n) + 
+#   geom_point(shape = 21,color = "black",fill = "lightgray") +
+#   geom_vline(xintercept = 0, color = "blue") +
+#   labs(title = "average mortality based on bin size = 3", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+dat %>% 
+  group_by(trt_5) %>% 
+  summarize(mean = mean(ln_typhoid_rate), n = n()) %>% 
+  ggplot() + 
+  aes(x = trt_5, y = mean, size = n) + 
+  geom_point(shape = 21,color = "black",fill = "lightgray") +
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "typhoid mortality", x = "time relative to the start of treatment", y = "average log typhoid mortality rate")
+
+
+# dat %>% 
+#   group_by(trt_7) %>% 
+#   summarize(mean = mean(ln_typhoid_rate), n = n()) %>% 
+#   ggplot() + aes(x = trt_7, y = mean, size = n) + geom_point(shape = 21,color = "black",fill = "lightgray") + 
+#   geom_vline(xintercept = 0, color = "blue") +
+#   labs(title = "average mortality based on bin size = 7", x = "time relative to the start of health policy", y = "average log mortality rate")
+# 
+# dat %>% 
+#   group_by(trt_10) %>% 
+#   summarize(mean = mean(ln_typhoid_rate), n = n()) %>% 
+#   ggplot() + aes(x = trt_10, y = mean, size = n) + geom_point(shape = 21,color = "black",fill = "lightgray") +
+#   geom_vline(xintercept = 0, color = "blue") +
+#   labs(title = "average mortality based on bin size = 10", x = "time relative to the start of health policy", y = "average log mortality rate")
+```
+
+```{r}
+# dat %>% 
+#   group_by(trt_1) %>% 
+#   summarize(mean = mean(ln_diarrhea_rate), n = n()) %>% 
+#   ggplot() + 
+#   aes(x = trt_1, y = mean, size = n) + 
+#   geom_point(shape = 21,color = "black",fill = "lightgray") + 
+#   geom_vline(xintercept = 0, color = "blue") +
+#   labs(title = "average mortality based on bin size = 1", x = "time relative to the start of health policy", y = "average log mortality rate")
+# 
+# dat %>% 
+#   group_by(trt_2) %>% 
+#   summarize(mean = mean(ln_diarrhea_rate), n = n()) %>% 
+#   ggplot() + 
+#   aes(x = trt_2, y = mean, size = n) + 
+#   geom_point(shape = 21,color = "black",fill = "lightgray") + 
+#   geom_vline(xintercept = 0, color = "blue") +
+#   labs(title = "average mortality based on bin size = 2", x = "time relative to the start of health policy", y = "average log mortality rate")
+# 
+# dat %>% 
+#   group_by(trt_3) %>% 
+#   summarize(mean = mean(ln_diarrhea_rate), n = n()) %>% 
+#   ggplot() + 
+#   aes(x = trt_3, y = mean, size = n) + 
+#   geom_point(shape = 21,color = "black",fill = "lightgray") +
+#   geom_vline(xintercept = 0, color = "blue") +
+#   labs(title = "average mortality based on bin size = 3", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+dat %>% 
+  group_by(trt_5) %>% 
+  summarize(mean = mean(ln_diarrhea_rate), n = n()) %>% 
+  ggplot() + 
+  aes(x = trt_5, y = mean, size = n) + 
+  geom_point(shape = 21,color = "black",fill = "lightgray") +
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "Diarrhea mortality", x = "time relative to the start of treatment", y = "average log diarrhea mortality rate")
+
+
+# dat %>% 
+#   group_by(trt_7) %>% 
+#   summarize(mean = mean(ln_diarrhea_rate), n = n()) %>% 
+#   ggplot() + aes(x = trt_7, y = mean, size = n) + geom_point(shape = 21,color = "black",fill = "lightgray") + 
+#   geom_vline(xintercept = 0, color = "blue") +
+#   labs(title = "average mortality based on bin size = 7", x = "time relative to the start of health policy", y = "average log mortality rate")
+# 
+# dat %>% 
+#   group_by(trt_10) %>% 
+#   summarize(mean = mean(ln_diarrhea_rate), n = n()) %>% 
+#   ggplot() + aes(x = trt_10, y = mean, size = n) + geom_point(shape = 21,color = "black",fill = "lightgray") +
+#   geom_vline(xintercept = 0, color = "blue") +
+#   labs(title = "average mortality based on bin size = 10", x = "time relative to the start of health policy", y = "average log mortality rate")
+```
+
+
+
+```{r}
+dat <- as.data.frame(dat)
+
+h <- c(3, 5, 7, 10)
+
+beta.linear <- se.linear <- matrix(NA, nrow = 4, ncol = 4)
+
+rownames(beta.linear) <- rownames(se.linear) <- c("all_mortality", "infant_mortality", "typhoid_mortality", "diarrhea_mortality")
+
+colnames(beta.linear) <- colnames(se.linear) <- c("h = 3", "h = 5", "h = 7", "h = 10")
+
+for (i in 1:length(h)){
+  
+  data <- dat[dat$t >= -h[i] & dat$t <= h[i], ]
+  
+  
+  ### water filtration
+  mort.linear <- lm(ln_mortality_rate ~ trt_knot * t, data = data)
+  
+  infant.linear <- lm( ln_mortality_under1_rate ~ trt_knot * t, data = data)
+  
+  
+  ty.linear <- lm( ln_typhoid_rate ~ trt_knot * t, data = data)
+  
+  di.linear <- lm(ln_diarrhea_rate ~ trt_knot * t, data = data)
+  
+  
+  
+  beta.linear[, i] <- c(summary(mort.linear)$coefficients[2,1], 
+                            summary(infant.linear)$coefficients[2,1],
+                            summary(ty.linear)$coefficients[2,1],
+                            summary(di.linear)$coefficients[2,1])
+  
+  se.linear[, i] <- c(summary(mort.linear)$coefficients[2,2], 
+                            summary(infant.linear)$coefficients[2,2],
+                            summary(ty.linear)$coefficients[2,2],
+                            summary(di.linear)$coefficients[2,2])
+}
+```
+
+```{r}
+beta.linear
+se.linear
+```
+
+```{r}
+beta.linear - 1.96*se.linear
+beta.linear + 1.96*se.linear
+```
+
+
+
+### RDD with different value of h
+
+#### informal visualization test of choosing value of h
+```{r}
+bin_number <- function(x){
+  if (x > 0){
+    ceiling(x)
+  } else {
+    floor(x)
+  }
+}
+
+dat <- dat %>% mutate(filter_1 = filter_t,
+               filter_2 = bin_number(filter_t/2),
+               filter_3 = bin_number(filter_t/3),
+               filter_5 = bin_number(filter_t/5),
+               filter_7 = bin_number(filter_t/7),
+               filter_10 = bin_number(filter_t/10),
+               
+               ch_1 = ch_t,
+               ch_2 = bin_number(ch_t/2),
+               ch_3 = bin_number(ch_t/3),
+               ch_5 = bin_number(ch_t/5),
+               ch_7 = bin_number(ch_t/7),
+               ch_10 = bin_number(ch_t/10),
+               
+               water_1 = water_t,
+               water_2 = bin_number(water_t/2),
+               water_3 = bin_number(water_t/3),
+               water_5 = bin_number(water_t/5),
+               water_7 = bin_number(water_t/7),
+               water_10 = bin_number(water_t/10))
+```
+
+### for mortality rate
+
+for water filtration: Clear jump before and after 0 at h = 5
+```{r}
+dat %>% 
+  group_by(filter_1) %>% 
+  summarize(mean = mean(ln_mortality_rate), n = n()) %>% 
+  ggplot() + 
+  aes(x = filter_1, y = mean, size = n) + 
+  geom_point(shape = 21,color = "black",fill = "lightgray") + 
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average mortality based on bin size = 1", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+dat %>% 
+  group_by(filter_2) %>% 
+  summarize(mean = mean(ln_mortality_rate), n = n()) %>% 
+  ggplot() + 
+  aes(x = filter_2, y = mean, size = n) + 
+  geom_point(shape = 21,color = "black",fill = "lightgray") + 
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average mortality based on bin size = 2", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+dat %>% 
+  group_by(filter_3) %>% 
+  summarize(mean = mean(ln_mortality_rate), n = n()) %>% 
+  ggplot() + 
+  aes(x = filter_3, y = mean, size = n) + 
+  geom_point(shape = 21,color = "black",fill = "lightgray") +
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average mortality based on bin size = 3", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+dat %>% 
+  group_by(filter_5) %>% 
+  summarize(mean = mean(ln_mortality_rate), n = n()) %>% 
+  ggplot() + 
+  aes(x = filter_5, y = mean, size = n) + 
+  geom_point(shape = 21,color = "black",fill = "lightgray") +
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average mortality based on bin size = 5", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+
+dat %>% 
+  group_by(filter_7) %>% 
+  summarize(mean = mean(ln_mortality_rate), n = n()) %>% 
+  ggplot() + aes(x = filter_7, y = mean, size = n) + geom_point(shape = 21,color = "black",fill = "lightgray") + 
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average mortality based on bin size = 7", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+dat %>% 
+  group_by(filter_10) %>% 
+  summarize(mean = mean(ln_mortality_rate), n = n()) %>% 
+  ggplot() + aes(x = filter_10, y = mean, size = n) + geom_point(shape = 21,color = "black",fill = "lightgray") +
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average mortality based on bin size = 10", x = "time relative to the start of health policy", y = "average log mortality rate")
+```
+for chlorination: clear jump at bin size = 7
+```{r}
+dat %>% 
+  group_by(ch_1) %>% 
+  summarize(mean = mean(ln_mortality_rate), n = n()) %>% 
+  ggplot() + 
+  aes(x = ch_1, y = mean, size = n) + 
+  geom_point(shape = 21,color = "black",fill = "lightgray") + 
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average mortality based on bin size = 1", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+dat %>% 
+  group_by(ch_2) %>% 
+  summarize(mean = mean(ln_mortality_rate), n = n()) %>% 
+  ggplot() + 
+  aes(x = ch_2, y = mean, size = n) + 
+  geom_point(shape = 21,color = "black",fill = "lightgray") + 
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average mortality based on bin size = 2", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+dat %>% 
+  group_by(ch_3) %>% 
+  summarize(mean = mean(ln_mortality_rate), n = n()) %>% 
+  ggplot() + 
+  aes(x = ch_3, y = mean, size = n) + 
+  geom_point(shape = 21,color = "black",fill = "lightgray") +
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average mortality based on bin size = 3", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+dat %>% 
+  group_by(ch_5) %>% 
+  summarize(mean = mean(ln_mortality_rate), n = n()) %>% 
+  ggplot() + 
+  aes(x = ch_5, y = mean, size = n) + 
+  geom_point(shape = 21,color = "black",fill = "lightgray") +
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average mortality based on bin size = 5", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+
+dat %>% 
+  group_by(ch_7) %>% 
+  summarize(mean = mean(ln_mortality_rate), n = n()) %>% 
+  ggplot() + aes(x = ch_7, y = mean, size = n) + geom_point(shape = 21,color = "black",fill = "lightgray") + 
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average mortality based on bin size = 7", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+dat %>% 
+  group_by(ch_10) %>% 
+  summarize(mean = mean(ln_mortality_rate), n = n()) %>% 
+  ggplot() + aes(x = ch_10, y = mean, size = n) + geom_point(shape = 21,color = "black",fill = "lightgray") +
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average mortality based on bin size = 10", x = "time relative to the start of health policy", y = "average log mortality rate")
+```
+
+
+for Clean water: 
+```{r}
+dat %>% 
+  group_by(water_1) %>% 
+  summarize(mean = mean(ln_mortality_rate), n = n()) %>% 
+  ggplot() + 
+  aes(x = water_1, y = mean, size = n) + 
+  geom_point(shape = 21,color = "black",fill = "lightgray") + 
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average mortality based on bin size = 1", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+dat %>% 
+  group_by(water_2) %>% 
+  summarize(mean = mean(ln_mortality_rate), n = n()) %>% 
+  ggplot() + 
+  aes(x = water_2, y = mean, size = n) + 
+  geom_point(shape = 21,color = "black",fill = "lightgray") + 
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average mortality based on bin size = 2", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+dat %>% 
+  group_by(water_3) %>% 
+  summarize(mean = mean(ln_mortality_rate), n = n()) %>% 
+  ggplot() + 
+  aes(x = water_3, y = mean, size = n) + 
+  geom_point(shape = 21,color = "black",fill = "lightgray") +
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average mortality based on bin size = 3", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+dat %>% 
+  group_by(water_5) %>% 
+  summarize(mean = mean(ln_mortality_rate), n = n()) %>% 
+  ggplot() + 
+  aes(x = water_5, y = mean, size = n) + 
+  geom_point(shape = 21,color = "black",fill = "lightgray") +
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average mortality based on bin size = 5", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+
+dat %>% 
+  group_by(water_7) %>% 
+  summarize(mean = mean(ln_mortality_rate), n = n()) %>% 
+  ggplot() + aes(x = water_7, y = mean, size = n) + geom_point(shape = 21,color = "black",fill = "lightgray") + 
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average mortality based on bin size = 7", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+dat %>% 
+  group_by(water_10) %>% 
+  summarize(mean = mean(ln_mortality_rate), n = n()) %>% 
+  ggplot() + aes(x = water_10, y = mean, size = n) + geom_point(shape = 21,color = "black",fill = "lightgray") +
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average mortality based on bin size = 10", x = "time relative to the start of health policy", y = "average log mortality rate")
+```
+
+infant mortality rate and water filtration
+```{r}
+dat %>% 
+  group_by(filter_1) %>% 
+  summarize(mean = mean(ln_mortality_under1_rate), n = n()) %>% 
+  ggplot() + 
+  aes(x = filter_1, y = mean, size = n) + 
+  geom_point(shape = 21,color = "black",fill = "lightgray") + 
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average infant mortality based on bin size = 1", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+dat %>% 
+  group_by(filter_2) %>% 
+  summarize(mean = mean(ln_mortality_under1_rate), n = n()) %>% 
+  ggplot() + 
+  aes(x = filter_2, y = mean, size = n) + 
+  geom_point(shape = 21,color = "black",fill = "lightgray") + 
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average infant mortality based on bin size = 2", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+dat %>% 
+  group_by(filter_3) %>% 
+  summarize(mean = mean(ln_mortality_under1_rate), n = n()) %>% 
+  ggplot() + 
+  aes(x = filter_3, y = mean, size = n) + 
+  geom_point(shape = 21,color = "black",fill = "lightgray") +
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average infant mortality based on bin size = 3", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+dat %>% 
+  group_by(filter_5) %>% 
+  summarize(mean = mean(ln_mortality_under1_rate), n = n()) %>% 
+  ggplot() + 
+  aes(x = filter_5, y = mean, size = n) + 
+  geom_point(shape = 21,color = "black",fill = "lightgray") +
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average infant mortality based on bin size = 5", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+
+dat %>% 
+  group_by(filter_7) %>% 
+  summarize(mean = mean(ln_mortality_under1_rate), n = n()) %>% 
+  ggplot() + aes(x = filter_7, y = mean, size = n) + geom_point(shape = 21,color = "black",fill = "lightgray") + 
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average infant mortality based on bin size = 7", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+dat %>% 
+  group_by(filter_10) %>% 
+  summarize(mean = mean(ln_mortality_under1_rate), n = n()) %>% 
+  ggplot() + aes(x = filter_10, y = mean, size = n) + geom_point(shape = 21,color = "black",fill = "lightgray") +
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average infant mortality based on bin size = 10", x = "time relative to the start of health policy", y = "average log mortality rate")
+```
+
+infant mortality and chlorination
+```{r}
+dat %>% 
+  group_by(ch_1) %>% 
+  summarize(mean = mean(ln_mortality_under1_rate), n = n()) %>% 
+  ggplot() + 
+  aes(x = ch_1, y = mean, size = n) + 
+  geom_point(shape = 21,color = "black",fill = "lightgray") + 
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average infant mortality based on bin size = 1", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+dat %>% 
+  group_by(ch_2) %>% 
+  summarize(mean = mean(ln_mortality_under1_rate), n = n()) %>% 
+  ggplot() + 
+  aes(x = ch_2, y = mean, size = n) + 
+  geom_point(shape = 21,color = "black",fill = "lightgray") + 
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average infant mortality based on bin size = 2", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+dat %>% 
+  group_by(ch_3) %>% 
+  summarize(mean = mean(ln_mortality_under1_rate), n = n()) %>% 
+  ggplot() + 
+  aes(x = ch_3, y = mean, size = n) + 
+  geom_point(shape = 21,color = "black",fill = "lightgray") +
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average infant mortality based on bin size = 3", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+dat %>% 
+  group_by(ch_5) %>% 
+  summarize(mean = mean(ln_mortality_under1_rate), n = n()) %>% 
+  ggplot() + 
+  aes(x = ch_5, y = mean, size = n) + 
+  geom_point(shape = 21,color = "black",fill = "lightgray") +
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average infant mortality based on bin size = 5", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+
+dat %>% 
+  group_by(ch_7) %>% 
+  summarize(mean = mean(ln_mortality_under1_rate), n = n()) %>% 
+  ggplot() + aes(x = ch_7, y = mean, size = n) + geom_point(shape = 21,color = "black",fill = "lightgray") + 
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average infant mortality based on bin size = 7", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+dat %>% 
+  group_by(ch_10) %>% 
+  summarize(mean = mean(ln_mortality_under1_rate), n = n()) %>% 
+  ggplot() + aes(x = ch_10, y = mean, size = n) + geom_point(shape = 21,color = "black",fill = "lightgray") +
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average infant mortality based on bin size = 10", x = "time relative to the start of health policy", y = "average log mortality rate")
+```
+infant mortality and clean water project
+```{r}
+dat %>% 
+  group_by(water_1) %>% 
+  summarize(mean = mean(ln_mortality_under1_rate), n = n()) %>% 
+  ggplot() + 
+  aes(x = water_1, y = mean, size = n) + 
+  geom_point(shape = 21,color = "black",fill = "lightgray") + 
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average infant mortality based on bin size = 1", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+dat %>% 
+  group_by(water_2) %>% 
+  summarize(mean = mean(ln_mortality_under1_rate), n = n()) %>% 
+  ggplot() + 
+  aes(x = water_2, y = mean, size = n) + 
+  geom_point(shape = 21,color = "black",fill = "lightgray") + 
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average infant mortality based on bin size = 2", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+dat %>% 
+  group_by(water_3) %>% 
+  summarize(mean = mean(ln_mortality_under1_rate), n = n()) %>% 
+  ggplot() + 
+  aes(x = water_3, y = mean, size = n) + 
+  geom_point(shape = 21,color = "black",fill = "lightgray") +
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average infant mortality based on bin size = 3", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+dat %>% 
+  group_by(water_5) %>% 
+  summarize(mean = mean(ln_mortality_under1_rate), n = n()) %>% 
+  ggplot() + 
+  aes(x = water_5, y = mean, size = n) + 
+  geom_point(shape = 21,color = "black",fill = "lightgray") +
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average infant mortality based on bin size = 5", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+
+dat %>% 
+  group_by(water_7) %>% 
+  summarize(mean = mean(ln_mortality_under1_rate), n = n()) %>% 
+  ggplot() + aes(x = water_7, y = mean, size = n) + geom_point(shape = 21,color = "black",fill = "lightgray") + 
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average infant mortality based on bin size = 7", x = "time relative to the start of health policy", y = "average log mortality rate")
+
+dat %>% 
+  group_by(water_10) %>% 
+  summarize(mean = mean(ln_mortality_under1_rate), n = n()) %>% 
+  ggplot() + aes(x = water_10, y = mean, size = n) + geom_point(shape = 21,color = "black",fill = "lightgray") +
+  geom_vline(xintercept = 0, color = "blue") +
+  labs(title = "average infant mortality based on bin size = 10", x = "time relative to the start of health policy", y = "average log mortality rate")
+```
+
+```{r}
+plot(x = dat$filter_t, y = dat$ln_mortality_rate)
+plot(x = dat$filter_t, y = dat$ln_mortality_under1_rate)
+plot(x = dat$filter_t, y = dat$ln_typhoid_rate)
+plot(x = dat$filter_t, y = dat$ln_diarrhea_rate)
+```
+
+
+
+#### estimate average causal effect with RDD using local linear regression
+
+#### find the optimal bandwidth with leave-one-out crossvalidation tailored for RD
+```{r}
+# find.h <- function(data, outcome, time_variable, bandwidth){
+#   data <- as.data.frame(data)
+#   
+#   mse.left <- numeric(100)
+#   mse.right <- numeric(100)
+#   
+#   left.index <- abs((min(data$time_variable) + bandwidth))
+#   right.index <- max(data$time_variable) - bandwidth
+#   
+#   for (i in 1: left.index ){
+#   fit.data.left <- data[data$time_variable <= -i & data$time_variable >= -(i+bandwidth), ]
+#   mod.left <- lm(outcome ~ time_variable, data = fit.data.left)
+#   mse.left[i+1] <- mean((predict(mod.left) - fit.data.left$outcome)^2)
+#   }
+#   
+#   
+#   for (i in 1:right.index){
+#   fit.data.right <- data[data$time_variable >= i & data$time_variable <= i+bandwidth, ]
+#   mod.right <- lm(outcome ~ time_variable, data = fit.data.right)
+#   mse.right[i+1] <- mean((predict(mod.right) - fit.data.right$outcome)^2)
+#   }
+#   }
+```
+
+
+```{r}
+#find.h(dat, ln_mortality_rate, filter_t, bandwidth = 5)
+```
+
+
+
+### estimate ACE with different window size
+```{r}
+# dat <- as.data.frame(dat)
+# 
+# h <- c(3, 5, 7, 10)
+# var <- c("filter_t", "ch_t", "water_t")
+# trt <- c("filter_knot", "ch_knot", "water_knot")
+# outcome <- c("ln_mortality_rate", "ln_mortality_under1_rate", "ln_typhoid_rate", "ln_diarrhea_rate")
+# 
+# 
+# for (i in 1:length(h)){
+#   for (j in 1:length(var)){
+#   data <- dat[dat$var[j] >= -h[i] & dat$var[j] <= h[i], ]
+#   
+#   mod.linear <- lm(ln_mortality_rate ~ var[j] + trt[j], data = data)
+#   beta.trt1[i, j] <- summary(mod.linear)$coefficients[trt[j]]
+#   
+#   # mod.inter <- lm(ln_mortality_rate ~ data$var[j] * data$trt[j], data = data)
+#   # beta.trt2 <- summary(mod.inter)$coefficients[trt[j]]
+#   }
+#   
+#   
+# }
+
+```
+```{r}
+# beta.trt1 <- rep(NA, length(var))
+# for (i in 1:length(var)){
+#   data <- dat[dat$var[i] >= -3 & dat$var[i] <= 3, ]
+#   head(data)
+#   var1 <- cat(var[i], "\n") ## remove the quotation marks
+#   trt1 <- cat(trt[i], "\n")
+#   mod.linear <- lm(ln_mortality_rate ~ var1 + trt1, data = data)
+#   beta.trt1[i] <- summary(mod.linear)$coefficients[trt1]
+# }
+```
+
+
+
+```{r}
+dat <- as.data.frame(dat)
+
+h <- c(3, 5, 7, 10)
+var <- c("filter_t", "ch_t", "water_t")
+trt <- c("filter_knot", "ch_knot", "water_knot")
+outcome <- c("ln_mortality_rate", "ln_mortality_under1_rate", "ln_typhoid_rate", "ln_diarrhea_rate")
+
+filter.beta.linear <- filter.se.linear <- ch.beta.linear <- water.se.linear <- water.beta.linear <- ch.se.linear <- matrix(NA, nrow = 4, ncol = 4)
+
+rownames(filter.beta.linear) <- rownames(filter.se.linear) <- rownames(ch.beta.linear) <- rownames(water.se.linear) <- rownames(water.beta.linear) <- rownames(ch.se.linear) <- c("all_mortality", "infant_mortality", "typhoid_mortality", "diarrhea_mortality")
+
+colnames(filter.beta.linear) <- colnames(filter.se.linear) <- colnames(ch.beta.linear) <- colnames(water.se.linear) <- colnames(water.beta.linear) <- colnames(ch.se.linear) <- c("h = 3", "h = 5", "h = 7", "h = 10")
+
+for (i in 1:length(h)){
+  
+  data.filter <- dat[dat$filter_t >= -h[i] & dat$filter_t <= h[i], ]
+  data.ch <- dat[dat$ch_t >= -h[i] & dat$ch_t <= h[i], ]
+  data.water <- dat[dat$water_t >= -h[i] & dat$water_t <= h[i], ]
+  
+  ### water filtration
+  filter.mort.linear <- lm(ln_mortality_rate ~ filter_knot + filter_t, data = data.filter)
+  filter.mort.int <- lm(ln_mortality_rate ~ filter_knot * filter_t, data = data.filter)
+  
+  filter.infant.linear <- lm( ln_mortality_under1_rate ~ filter_knot + filter_t, data = data.filter)
+  filter.infant.int <- lm( ln_mortality_under1_rate ~ filter_knot * filter_t, data = data.filter)
+  
+  filter.ty.linear <- lm( ln_typhoid_rate ~ filter_knot + filter_t, data = data.filter)
+  filter.ty.int <- lm( ln_typhoid_rate ~ filter_knot * filter_t, data = data.filter)
+  
+  filter.di.linear <- lm(ln_diarrhea_rate ~ filter_knot + filter_t, data = data.filter)
+  filter.di.int <- lm(ln_diarrhea_rate ~ filter_knot * filter_t, data = data.filter)
+  
+  
+  filter.beta.linear[, i] <- c(summary(filter.mort.linear)$coefficients[2,1], 
+                            summary(filter.infant.linear)$coefficients[2,1],
+                            summary(filter.ty.linear)$coefficients[2,1],
+                            summary(filter.di.linear)$coefficients[2,1])
+  
+  filter.se.linear[, i] <- c(summary(filter.mort.linear)$coefficients[2,2], 
+                            summary(filter.infant.linear)$coefficients[2,2],
+                            summary(filter.ty.linear)$coefficients[2,2],
+                            summary(filter.di.linear)$coefficients[2,2])
+  
+  # filter.beta.int[, i] <- c(summary(filter.mort.int)$coefficients[2,1], 
+  #                           summary(filter.infant.int)$coefficients[2,1],
+  #                           summary(filter.ty.int)$coefficients[2,1],
+  #                           summary(filter.di.int)$coefficients[2,1])
+  
+  # filter.beta.int[, i] <- c(summary(filter.mort.int)$coefficients[filter_knot], 
+  #                           summary(filter.infant.int)$coefficients[filter_knot],
+  #                           summary(filter.ty.int)$coefficients[filter_knot],
+  #                           summary(filter.di.int)$coefficients[filter_knot])
+  
+  ### chlorination
+  ch.mort.linear <- lm(ln_mortality_rate ~ ch_knot + ch_t, data = data.ch)
+  ch.mort.int <- lm(ln_mortality_rate ~ ch_knot * ch_t, data = data.ch)
+  
+  ch.infant.linear <- lm( ln_mortality_under1_rate ~ ch_knot + ch_t, data = data.ch)
+  ch.infant.int <- lm( ln_mortality_under1_rate ~ ch_knot * ch_t, data = data.ch)
+  
+  ch.ty.linear <- lm( ln_typhoid_rate ~ ch_knot + ch_t, data = data.ch)
+  ch.ty.int <- lm( ln_typhoid_rate ~ ch_knot * ch_t, data = data.ch)
+  
+  ch.di.linear <- lm(ln_diarrhea_rate ~ ch_knot + ch_t, data = data.ch)
+  ch.di.int <- lm(ln_diarrhea_rate ~ ch_knot * ch_t, data = data.ch)
+  
+  ch.beta.linear[, i] <- c(summary(ch.mort.linear)$coefficients[2,1], 
+                            summary(ch.infant.linear)$coefficients[2,1],
+                            summary(ch.ty.linear)$coefficients[2,1],
+                            summary(ch.di.linear)$coefficients[2,1])
+  
+  ch.se.linear[, i] <- c(summary(ch.mort.int)$coefficients[2,2],
+                            summary(ch.infant.int)$coefficients[2,2],
+                            summary(ch.ty.int)$coefficients[2,2],
+                            summary(ch.di.int)$coefficients[2,2])
+  
+  # ch.beta.int[, i] <- c(summary(ch.mort.int)$coefficients[ch_knot],
+  #                           summary(ch.infant.int)$coefficients[ch_knot],
+  #                           summary(ch.ty.int)$coefficients[ch_knot],
+  #                           summary(ch.di.int)$coefficients[ch_knot])
+  
+  ### clean water project
+  water.mort.linear <- lm(ln_mortality_rate ~ water_knot + water_t, data = data.water)
+  water.mort.int <- lm(ln_mortality_rate ~ water_knot * water_t, data = data.water)
+  
+  water.infant.linear <- lm( ln_mortality_under1_rate ~ water_knot + water_t, data = data.water)
+  water.infant.int <- lm( ln_mortality_under1_rate ~ water_knot * water_t, data = data.water)
+  
+  water.ty.linear <- lm( ln_typhoid_rate ~ water_knot + water_t, data = data.water)
+  water.ty.int <- lm( ln_typhoid_rate ~ water_knot * water_t, data = data.water)
+  
+  water.di.linear <- lm(ln_diarrhea_rate ~ water_knot + water_t, data = data.water)
+  water.di.int <- lm(ln_diarrhea_rate ~ water_knot * water_t, data = data.water)
+
+
+  water.beta.linear[, i] <- c(summary(water.mort.linear)$coefficients[2,1], 
+                            summary(water.infant.linear)$coefficients[2,1],
+                            summary(water.ty.linear)$coefficients[2,1],
+                            summary(water.di.linear)$coefficients[2,1])
+  
+  water.se.linear[, i] <- c(summary(water.mort.int)$coefficients[2,2],
+                            summary(water.infant.int)$coefficients[2,2],
+                            summary(water.ty.int)$coefficients[2,2],
+                            summary(water.di.int)$coefficients[2,2])
+  
+  # water.beta.int[, i] <- c(summary(water.mort.int)$coefficients[water_knot], 
+  #                           summary(water.infant.int)$coefficients[water_knot],
+  #                           summary(water.ty.int)$coefficients[water_knot],
+  #                           summary(water.di.int)$coefficients[water_knot])
+}
+```
+
+```{r}
+filter.beta.linear
+#filter.se.linear 
+ch.beta.linear 
+#water.se.linear
+water.beta.linear
+#ch.se.linear
+```
+
+```{r}
+filter.beta.up <- filter.beta.linear + 1.96*filter.se.linear
+filter.beta.low <- filter.beta.linear - 1.96*filter.se.linear
+filter.beta.up
+filter.beta.low
+```
+
+```{r}
+ch.beta.up <- ch.beta.linear + 1.96*ch.se.linear
+ch.beta.low <- ch.beta.linear - 1.96*ch.se.linear
+ch.beta.up
+ch.beta.low
+```
+
+```{r}
+water.beta.up <- water.beta.linear + 1.96*water.se.linear
+water.beta.low <- water.beta.linear - 1.96*water.se.linear
+water.beta.up
+water.beta.low
+```
+
 
 ## treatment effect of water filteration
 ```{r}
