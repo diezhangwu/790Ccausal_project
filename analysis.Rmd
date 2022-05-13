@@ -355,13 +355,34 @@ ggplot() +
 #devtools::install_github("kassambara/ggpubr")
 library(ggpubr)
 # 1. Open jpeg file
-jpeg("unadj_ITS_chl.jpg", width = 12, height = 8, units = 'in', res = 500)
+#jpeg("unadj_ITS_chl.jpg", width = 12, height = 8, units = 'in', res = 500)
 # 2. Create the plot
 ggarrange(fig_mort, fig_in, fig_ty, fig_di, 
           labels = c("A", "B", "C", "D"),
           ncol = 2, nrow = 2)
 # 3. Close the file
-dev.off()
+#dev.off()
+
+
+#save ITS regression results 
+
+#unadjusted ch 
+output_mort_unadj <- data.frame(round(coef(summary(mod.mort.nocov)),4))
+output_in_unadj <- data.frame(round(coef(summary(mod.in.nocov)),4))
+output_ty_unadj <- data.frame(round(coef(summary(mod.ty.nocov)),4))
+output_di_unadj <- data.frame(round(coef(summary(mod.di.nocov)),4))
+
+output_unadj <- rbind(output_mort_unadj,output_in_unadj,output_ty_unadj,output_di_unadj)
+write.csv(output_unadj,"ITS_unadj_coef.csv")
+#adjusted
+output_mort_adj <- data.frame(round(coef(summary(mod.mort)),4))
+output_in_adj <- data.frame(round(coef(summary(mod.in)),4))
+output_ty_adj <- data.frame(round(coef(summary(mod.ty)),4))
+output_di_adj <- data.frame(round(coef(summary(mod.di)),4))
+
+output_adj <- rbind(output_mort_adj, output_in_adj,output_ty_adj,output_di_adj)
+write.csv(output_adj,"ITS_adj_coef.csv")
+
 ```
 
 
@@ -405,6 +426,8 @@ axis(1,at=0:25*12,labels=F)
 axis(1,at=0:40*12,tick=F)
 # add a title
 title("Sicily, 2002-2006")
+
+
 
 ```
 
