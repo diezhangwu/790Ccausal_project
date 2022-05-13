@@ -6,80 +6,13 @@ output: html_notebook
 
 #### import dataset and data cleaning
 ```{r}
+
 library(dplyr)
 library(haven)
 library(ggplot2)
 dataset <- read_stata("data/Regression-and-Event-Study-Analyses.dta")
 ```
 
-
-#### Descriptive statistics
-```{r descriptive}
-#demographics
-#all
-dataset %>%
-  select(percent_female,percent_black,percent_nonwhite,percent_white,percent_other_nonwhite,percent_foreign,percent_age_less15,percent_age_15to44,percent_age_45plus) %>%
-  summarise_all(list(mean = ~mean(.), sd = ~sd(.)))
-#treatment group
-dataset %>%
-  filter(filter==1) %>%
-  summarise(n=n())
-dataset %>%
-  filter(filter==1) %>%
-  select(percent_female,percent_black,percent_nonwhite,percent_white,percent_other_nonwhite,percent_foreign,percent_age_less15,percent_age_15to44,percent_age_45plus) %>%
-  summarise_all(list(mean = ~mean(.), sd = ~sd(.))) 
-#control group
-dataset %>%
-  filter(filter<1) %>%
-  summarise(n=n())
-dataset %>%
-  filter(filter<1) %>%
-  select(percent_female,percent_black,percent_nonwhite,percent_white,percent_other_nonwhite,percent_foreign,percent_age_less15,percent_age_15to44,percent_age_45plus) %>%
-  summarise_all(list(mean = ~mean(.), sd = ~sd(.)))
-
-#Outcomes: filtration
-#all
-dataset %>%
-  select(mortality_rate,mortality_under1_rate,typhoid_rate,diarrhea_rate) %>%
-  summarise_all(list(mean = ~mean(.,na.rm = T), sd = ~sd(.,na.rm = T)))
-#treatment
-dataset %>%
-   filter(filter==1) %>%
-  select(mortality_rate,mortality_under1_rate,typhoid_rate,diarrhea_rate) %>%
-  summarise_all(list(mean = ~mean(.,na.rm = T), sd = ~sd(.,na.rm = T)))
-#control
-dataset %>%
-  filter(filter<1) %>%
-  select(mortality_rate,mortality_under1_rate,typhoid_rate,diarrhea_rate) %>%
-  summarise_all(list(mean = ~mean(.,na.rm = T), sd = ~sd(.,na.rm = T)))
-
-test <- dataset %>%
-  filter(filter<1 & filter>0)
-
-#Outcomes: chlorination
-#treatment
-dataset %>%
-   filter(chlorination==1) %>%
-  select(mortality_rate,mortality_under1_rate,typhoid_rate,diarrhea_rate) %>%
-  summarise_all(list(mean = ~mean(.,na.rm = T), sd = ~sd(.,na.rm = T)))
-#control
-dataset %>%
-  filter(chlorination<1) %>%
-  select(mortality_rate,mortality_under1_rate,typhoid_rate,diarrhea_rate) %>%
-  summarise_all(list(mean = ~mean(.,na.rm = T), sd = ~sd(.,na.rm = T)))
-
-#Outcomes: clean water project
-#treatment
-dataset %>%
-   filter(water_project==1) %>%
-  select(mortality_rate,mortality_under1_rate,typhoid_rate,diarrhea_rate) %>%
-  summarise_all(list(mean = ~mean(.,na.rm = T), sd = ~sd(.,na.rm = T)))
-#control
-dataset %>%
-  filter(water_project<1) %>%
-  select(mortality_rate,mortality_under1_rate,typhoid_rate,diarrhea_rate) %>%
-  summarise_all(list(mean = ~mean(.,na.rm = T), sd = ~sd(.,na.rm = T)))
-```
 
 
 ### RD Regression
@@ -155,6 +88,87 @@ dat <- dat %>% mutate(trt_1 = t,
                trt_5 = bin_number(t/5),
                trt_7 = bin_number(t/7),
                trt_10 = bin_number(t/10))
+```
+
+#### Descriptive statistics
+```{r descriptive}
+#demographics
+#all
+dat %>%
+  dplyr::select(percent_female,percent_nonwhite,percent_foreign,percent_age_less15,percent_age_15to44,percent_age_45plus) %>%
+  summarise_all(list(mean = ~mean(.), sd = ~sd(.)))
+#treatment group
+dat %>%
+  filter(trt==1) %>%
+  summarise(n=n())
+dat %>%
+  filter(trt==1) %>%
+  select(percent_female,percent_nonwhite,percent_foreign,percent_age_less15,percent_age_15to44,percent_age_45plus) %>%
+  summarise_all(list(mean = ~mean(.), sd = ~sd(.))) 
+#control group
+dat %>%
+  filter(trt==0) %>%
+  summarise(n=n())
+dat %>%
+  filter(trt==0) %>%
+  select(percent_female,percent_nonwhite,percent_foreign,percent_age_less15,percent_age_15to44,percent_age_45plus) %>%
+  summarise_all(list(mean = ~mean(.), sd = ~sd(.)))
+#Outcomes: composite of three
+#all
+dat %>%
+  select(mortality_rate,mortality_under1_rate,typhoid_rate,diarrhea_rate) %>%
+  summarise_all(list(mean = ~mean(.,na.rm = T), sd = ~sd(.,na.rm = T)))
+#treatment
+dat %>%
+  filter(trt==1) %>%
+  select(mortality_rate,mortality_under1_rate,typhoid_rate,diarrhea_rate) %>%
+  summarise_all(list(mean = ~mean(.,na.rm = T), sd = ~sd(.,na.rm = T)))
+#control
+dat %>%
+  filter(trt==0) %>%
+  select(mortality_rate,mortality_under1_rate,typhoid_rate,diarrhea_rate) %>%
+  summarise_all(list(mean = ~mean(.,na.rm = T), sd = ~sd(.,na.rm = T)))
+test <- dataset %>%
+  filter(filter<1 & filter>0)
+#Outcomes: filtration
+#all
+dataset %>%
+  select(mortality_rate,mortality_under1_rate,typhoid_rate,diarrhea_rate) %>%
+  summarise_all(list(mean = ~mean(.,na.rm = T), sd = ~sd(.,na.rm = T)))
+#treatment
+dataset %>%
+   filter(filter==1) %>%
+  select(mortality_rate,mortality_under1_rate,typhoid_rate,diarrhea_rate) %>%
+  summarise_all(list(mean = ~mean(.,na.rm = T), sd = ~sd(.,na.rm = T)))
+#control
+dataset %>%
+  filter(filter<1) %>%
+  select(mortality_rate,mortality_under1_rate,typhoid_rate,diarrhea_rate) %>%
+  summarise_all(list(mean = ~mean(.,na.rm = T), sd = ~sd(.,na.rm = T)))
+test <- dataset %>%
+  filter(filter<1 & filter>0)
+#Outcomes: chlorination
+#treatment
+dataset %>%
+   filter(chlorination==1) %>%
+  select(mortality_rate,mortality_under1_rate,typhoid_rate,diarrhea_rate) %>%
+  summarise_all(list(mean = ~mean(.,na.rm = T), sd = ~sd(.,na.rm = T)))
+#control
+dataset %>%
+  filter(chlorination<1) %>%
+  select(mortality_rate,mortality_under1_rate,typhoid_rate,diarrhea_rate) %>%
+  summarise_all(list(mean = ~mean(.,na.rm = T), sd = ~sd(.,na.rm = T)))
+#Outcomes: clean water project
+#treatment
+dataset %>%
+   filter(water_project==1) %>%
+  select(mortality_rate,mortality_under1_rate,typhoid_rate,diarrhea_rate) %>%
+  summarise_all(list(mean = ~mean(.,na.rm = T), sd = ~sd(.,na.rm = T)))
+#control
+dataset %>%
+  filter(water_project<1) %>%
+  select(mortality_rate,mortality_under1_rate,typhoid_rate,diarrhea_rate) %>%
+  summarise_all(list(mean = ~mean(.,na.rm = T), sd = ~sd(.,na.rm = T)))
 ```
 
 ```{r}
@@ -851,6 +865,7 @@ plot(x = dat$filter_t, y = dat$ln_diarrhea_rate)
 # }
 
 ```
+
 ```{r}
 # beta.trt1 <- rep(NA, length(var))
 # for (i in 1:length(var)){
@@ -1072,59 +1087,59 @@ summary(glm(ln_diarrhea_rate ~ percent_female + percent_nonwhite + percent_forei
 #all cause mortality
 dat.pred.nocov <- 
   dat %>% 
-  select(ch_t,ch_knot) %>%
+  select(t,trt_knot) %>%
   distinct()
 
 #unadjusted model
-mod.mort.nocov <- glm(ln_mortality_rate ~ ch_knot*ch_t, data = dat)
+mod.mort.nocov <- glm(ln_mortality_rate ~ trt_knot*t, data = dat)
 #generate predicted values based on the model in order to create a plot
 y.mort.nocov <- predict(mod.mort.nocov, newdata = dat.pred.nocov, type = "response")
 #to create the counter-factual scenario we create a data frame as if the intervention was never being implemented
 dat.pred.nocov.ct <- 
   dat %>% 
-  select(ch_t,ch_knot) %>%
-  filter(ch_knot==1) %>%
-  mutate(ch_knot=0) %>%
+  select(t,trt_knot) %>%
+  filter(trt_knot==1) %>%
+  mutate(trt_knot=0) %>%
   distinct()
 #generate fitted value for counter-factual scenario
 y.mort.nocov.ct <- predict(mod.mort.nocov, newdata = dat.pred.nocov.ct, type = "response")
 
 #plot
 fig_mort <- ggplot() +
-  geom_point(aes(x = dat$ch_t, y = dat$ln_mortality_rate),color="darkgrey") +
-  geom_line(aes(x = dat.pred.nocov$ch_t, y = y.mort.nocov),color="red") + # fitted line
-  geom_line(aes(x = dat.pred.nocov.ct$ch_t, y = y.mort.nocov.ct),color="red",linetype="dashed") +
+  geom_point(aes(x = dat$t, y = dat$ln_mortality_rate),color="darkgrey") +
+  geom_line(aes(x = dat.pred.nocov$t, y = y.mort.nocov),color="red") + # fitted line
+  geom_line(aes(x = dat.pred.nocov.ct$t, y = y.mort.nocov.ct),color="red",linetype="dashed") +
   geom_vline(xintercept = 0, color = "blue") +
   labs(x = "year relative to start of treatment", y = "log all-cause mortality")+
   theme(legend.position = "none") +
   theme_bw()
 
 #adjusted model
-dat.pred <- dat %>% select(
-                           percent_female,
-                           percent_nonwhite,
-                           percent_foreign,
-                           percent_age_less15,
-                           percent_age_15to44,
-                           percent_age_45plus,
-                           ch_t, 
-                           ch_knot)
-
-mod.mort <- glm(ln_mortality_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot*ch_t, data = dat)
-
-y.mort <- predict(mod.mort, newdata = dat.pred)
-
-ggplot() +
-  geom_point(aes(x = dat$ch_t, y = dat$ln_mortality_rate)) +
-  geom_point(aes(x = dat$ch_t, y = y.mort, color = as.factor(dat$ch_knot + 1))) +
-  geom_vline(xintercept = 0, color = "blue") +
-  labs(x = "year relative to start of treatment", y = "log all-cause mortality")+
-  theme(legend.position = "none")
+# dat.pred <- dat %>% select(
+#                            percent_female,
+#                            percent_nonwhite,
+#                            percent_foreign,
+#                            percent_age_less15,
+#                            percent_age_15to44,
+#                            percent_age_45plus,
+#                            ch_t, 
+#                            ch_knot)
+# 
+# mod.mort <- glm(ln_mortality_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot*ch_t, data = dat)
+# 
+# y.mort <- predict(mod.mort, newdata = dat.pred)
+# 
+# ggplot() +
+#   geom_point(aes(x = dat$ch_t, y = dat$ln_mortality_rate)) +
+#   geom_point(aes(x = dat$ch_t, y = y.mort, color = as.factor(dat$ch_knot + 1))) +
+#   geom_vline(xintercept = 0, color = "blue") +
+#   labs(x = "year relative to start of treatment", y = "log all-cause mortality")+
+#   theme(legend.position = "none")
 
 
 #infant mortality
 #unadjusted model
-mod.in.nocov <- glm(ln_mortality_under1_rate ~ ch_knot*ch_t, data = dat)
+mod.in.nocov <- glm(ln_mortality_under1_rate ~ trt_knot*t, data = dat)
 #generate predicted values based on the model in order to create a plot
 y.in.nocov <- predict(mod.in.nocov, newdata = dat.pred.nocov, type = "response")
 #generate fitted value for counter-factual scenario
@@ -1132,30 +1147,30 @@ y.in.nocov.ct <- predict(mod.in.nocov, newdata = dat.pred.nocov.ct, type = "resp
 
 #plot
 fig_in <- ggplot() +
-  geom_point(aes(x = dat$ch_t, y = dat$ln_mortality_under1_rate),color="darkgrey") +
-  geom_line(aes(x = dat.pred.nocov$ch_t, y = y.in.nocov),color="red") + # fitted line
-  geom_line(aes(x = dat.pred.nocov.ct$ch_t, y = y.in.nocov.ct),color="red",linetype="dashed") +
+  geom_point(aes(x = dat$t, y = dat$ln_mortality_under1_rate),color="darkgrey") +
+  geom_line(aes(x = dat.pred.nocov$t, y = y.in.nocov),color="red") + # fitted line
+  geom_line(aes(x = dat.pred.nocov.ct$t, y = y.in.nocov.ct),color="red",linetype="dashed") +
   geom_vline(xintercept = 0, color = "blue") +
   labs(x = "year relative to start of treatment", y = "log infant mortality")+
   theme(legend.position = "none") +
   theme_bw()
 
 #adjusted model
-mod.in <- glm(ln_mortality_under1_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot*ch_t, data = dat)
-
-y.in <- predict(mod.in, newdata = dat.pred)
-
-ggplot() +
-  geom_point(aes(x = dat$ch_t, y = dat$ln_mortality_under1_rate) )+
-  geom_point(aes(x = dat$ch_t, y = y.in, color = as.factor(dat$ch_knot + 1))) +
-  geom_vline(xintercept = 0, color = "blue") +
-  labs(x = "year relative to start of treatment", y = "log infant mortality")+
-  theme(legend.position = "none")
+# mod.in <- glm(ln_mortality_under1_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot*ch_t, data = dat)
+# 
+# y.in <- predict(mod.in, newdata = dat.pred)
+# 
+# ggplot() +
+#   geom_point(aes(x = dat$ch_t, y = dat$ln_mortality_under1_rate) )+
+#   geom_point(aes(x = dat$ch_t, y = y.in, color = as.factor(dat$ch_knot + 1))) +
+#   geom_vline(xintercept = 0, color = "blue") +
+#   labs(x = "year relative to start of treatment", y = "log infant mortality")+
+#   theme(legend.position = "none")
 
 
 #typhoid mortality
 #unadjusted model
-mod.ty.nocov <- glm(ln_typhoid_rate ~ ch_knot*ch_t, data = dat)
+mod.ty.nocov <- glm(ln_typhoid_rate ~ trt_knot*t, data = dat)
 #generate predicted values based on the model in order to create a plot
 y.ty.nocov <- predict(mod.ty.nocov, newdata = dat.pred.nocov, type = "response")
 #generate fitted value for counter-factual scenario
@@ -1163,30 +1178,30 @@ y.ty.nocov.ct <- predict(mod.ty.nocov, newdata = dat.pred.nocov.ct, type = "resp
 
 #plot
 fig_ty <- ggplot() +
-  geom_point(aes(x = dat$ch_t, y = dat$ln_typhoid_rate),color="darkgrey") +
-  geom_line(aes(x = dat.pred.nocov$ch_t, y = y.ty.nocov),color="red") + # fitted line
-  geom_line(aes(x = dat.pred.nocov.ct$ch_t, y = y.ty.nocov.ct),color="red",linetype="dashed") +
+  geom_point(aes(x = dat$t, y = dat$ln_typhoid_rate),color="darkgrey") +
+  geom_line(aes(x = dat.pred.nocov$t, y = y.ty.nocov),color="red") + # fitted line
+  geom_line(aes(x = dat.pred.nocov.ct$t, y = y.ty.nocov.ct),color="red",linetype="dashed") +
   geom_vline(xintercept = 0, color = "blue") +
   labs(x = "year relative to start of treatment", y = "log typhoid mortality")+
   theme(legend.position = "none") +
   theme_bw()
 
 #adjusted model
-mod.ty <- glm(ln_typhoid_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot*ch_t, data = dat)
-
-y.ty <- predict(mod.ty, newdata = dat.pred)
-
-ggplot() +
-  geom_point(aes(x = dat$ch_t, y = dat$ln_typhoid_rate) )+
-  geom_point(aes(x = dat$ch_t, y = y.ty, color = as.factor(dat$ch_knot + 1))) +
-  geom_vline(xintercept = 0, color = "blue") +
-  labs(x = "year relative to start of treatment", y = "log typhoid mortality")+
-  theme(legend.position = "none")
+# mod.ty <- glm(ln_typhoid_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot*ch_t, data = dat)
+# 
+# y.ty <- predict(mod.ty, newdata = dat.pred)
+# 
+# ggplot() +
+#   geom_point(aes(x = dat$ch_t, y = dat$ln_typhoid_rate) )+
+#   geom_point(aes(x = dat$ch_t, y = y.ty, color = as.factor(dat$ch_knot + 1))) +
+#   geom_vline(xintercept = 0, color = "blue") +
+#   labs(x = "year relative to start of treatment", y = "log typhoid mortality")+
+#   theme(legend.position = "none")
 
 
 #diarrhea mortality
 #unadjusted model
-mod.di.nocov <- glm(ln_diarrhea_rate ~ ch_knot*ch_t, data = dat)
+mod.di.nocov <- glm(ln_diarrhea_rate ~ trt_knot*t, data = dat)
 #generate predicted values based on the model in order to create a plot
 y.di.nocov <- predict(mod.di.nocov, newdata = dat.pred.nocov, type = "response")
 #generate fitted value for counter-factual scenario
@@ -1194,26 +1209,26 @@ y.di.nocov.ct <- predict(mod.di.nocov, newdata = dat.pred.nocov.ct, type = "resp
 
 #plot
 fig_di <- ggplot() +
-  geom_point(aes(x = dat$ch_t, y = dat$ln_diarrhea_rate),color="darkgrey") +
-  geom_line(aes(x = dat.pred.nocov$ch_t, y = y.di.nocov),color="red") + # fitted line
-  geom_line(aes(x = dat.pred.nocov.ct$ch_t, y = y.di.nocov.ct),color="red",linetype="dashed") +
+  geom_point(aes(x = dat$t, y = dat$ln_diarrhea_rate),color="darkgrey") +
+  geom_line(aes(x = dat.pred.nocov$t, y = y.di.nocov),color="red") + # fitted line
+  geom_line(aes(x = dat.pred.nocov.ct$t, y = y.di.nocov.ct),color="red",linetype="dashed") +
   geom_vline(xintercept = 0, color = "blue") +
   labs(x = "year relative to start of treatment", y = "log diarrhea mortality")+
   theme(legend.position = "none") +
   theme_bw()
 
 #adjusted model
-mod.di <- glm(ln_diarrhea_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot*ch_t, data = dat)
-
-
-y.di <- predict(mod.di, newdata = dat.pred)
-
-ggplot() +
-  geom_point(aes(x = dat$ch_t, y = dat$ln_diarrhea_rate) )+
-  geom_point(aes(x = dat$ch_t, y = y.di, color = as.factor(dat$ch_knot + 1))) +
-  geom_vline(xintercept = 0, color = "blue") +
-  labs(x = "year relative to start of treatment", y = "log diarrhea mortality")+
-  theme(legend.position = "none")
+# mod.di <- glm(ln_diarrhea_rate ~ percent_female + percent_nonwhite + percent_foreign + percent_age_less15 + percent_age_15to44 + percent_age_45plus + ch_t + ch_knot*ch_t, data = dat)
+# 
+# 
+# y.di <- predict(mod.di, newdata = dat.pred)
+# 
+# ggplot() +
+#   geom_point(aes(x = dat$ch_t, y = dat$ln_diarrhea_rate) )+
+#   geom_point(aes(x = dat$ch_t, y = y.di, color = as.factor(dat$ch_knot + 1))) +
+#   geom_vline(xintercept = 0, color = "blue") +
+#   labs(x = "year relative to start of treatment", y = "log diarrhea mortality")+
+#   theme(legend.position = "none")
 
 #combine the four unadjusted plots to one and save the figure
 #required package
@@ -1221,18 +1236,18 @@ ggplot() +
 #devtools::install_github("kassambara/ggpubr")
 library(ggpubr)
 # 1. Open jpeg file
-#jpeg("unadj_ITS_chl.jpg", width = 12, height = 8, units = 'in', res = 500)
+jpeg("unadj_ITS.jpg", width = 12, height = 8, units = 'in', res = 500)
 # 2. Create the plot
 ggarrange(fig_mort, fig_in, fig_ty, fig_di, 
           labels = c("A", "B", "C", "D"),
           ncol = 2, nrow = 2)
 # 3. Close the file
-#dev.off()
+dev.off()
 
 
 #save ITS regression results 
 
-#unadjusted ch 
+#unadjusted  
 output_mort_unadj <- data.frame(round(coef(summary(mod.mort.nocov)),4))
 output_in_unadj <- data.frame(round(coef(summary(mod.in.nocov)),4))
 output_ty_unadj <- data.frame(round(coef(summary(mod.ty.nocov)),4))
